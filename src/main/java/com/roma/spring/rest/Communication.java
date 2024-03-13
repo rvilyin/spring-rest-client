@@ -13,45 +13,36 @@ import java.util.List;
 
 @Component
 public class Communication {
-    private final RestTemplate restTemplate;
+    private final RestTemplate restTemplate = new RestTemplate();
     private final String URL = "http://94.198.50.185:7081/api/users";
 
-    public Communication(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
-    public ResponseEntity<List<User>> getAllUsers() {
-        return restTemplate.exchange(URL, HttpMethod.GET, null
-                        , new ParameterizedTypeReference<List<User>>() {});
+    public String getSessionId() {
+        HttpEntity<String> response =  restTemplate.getForEntity("http://94.198.50.185:7081/api/users", String.class);
+        List<String> cookies = response.getHeaders().get("Set-Cookie");
+        String sessionId = cookies.get(0).substring(0, cookies.get(0).indexOf(';'));
+        return sessionId;
     }
 
     public String saveUser(User user, HttpHeaders headers) {
         HttpEntity<User> entity = new HttpEntity<>(user, headers);
-        Long id = user.getId();
-
-        ResponseEntity<String> responseEntity = null;
-
-        if (id == null) {
-//            responseEntity = restTemplate.postForEntity(URL, entity, String.class);
-
-            responseEntity = restTemplate.exchange(URL, HttpMethod.POST, entity, String.class);
-
-            System.out.println("New user was added");
-            System.out.println(responseEntity.getBody());
-        } else {
-            System.out.println(entity);
-            responseEntity = restTemplate.exchange(URL, HttpMethod.PUT, entity, String.class);
-            System.out.println("User with ID " + id + " was updated");
-            System.out.println(responseEntity.getBody());
-        }
-
+        ResponseEntity<String>  responseEntity = restTemplate.exchange(URL, HttpMethod.POST, entity, String.class);
         return responseEntity.getBody();
 
     }
 
+    public String updateUser(User user, HttpHeaders headers) {
+        HttpEntity<User> entity = new HttpEntity<>(user, headers);
+        ResponseEntity<String> responseEntity = restTemplate.exchange(URL, HttpMethod.PUT, entity, String.class);
+        return responseEntity.getBody();
+    }
 
-    public void deleteUser(Long id){
 
+
+    public String deleteUser(Long id, HttpHeaders headers){
+        HttpEntity<User> entity = new HttpEntity<>(headers);
+        String url2 = URL + "/" + id.toString();
+        ResponseEntity<String> responseEntity = restTemplate.exchange(url2, HttpMethod.DELETE, entity, String.class);
+        return responseEntity.getBody();
     }
 
 }
